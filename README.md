@@ -1,36 +1,110 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Quote Builder - BrokenRubik
+
+A professional quote/proposal generator that allows you to write content in Markdown, see a live preview, and export to PDF with a customizable template.
+
+## Features
+
+- **Markdown Editor**: Write your proposals using familiar Markdown syntax
+- **Live Preview**: See exactly how your document will look in real-time
+- **PDF Export**: Generate professional PDFs with html2pdf.js
+- **Customizable Templates**: Adjust colors, fonts, company info, and more
+- **Auto-Save**: Your work is automatically saved to localStorage
+- **Quote Numbering**: Automatic quote number generation
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to use the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Editor (Left Panel)
+Write your proposal using Markdown syntax:
+- `# H1`, `## H2`, `### H3` for headers
+- `**bold**` and `*italic*` for text formatting
+- `- item` for bullet lists
+- `1. item` for numbered lists
+- Tables with pipe syntax
+- `> quote` for blockquotes
+- `---` for horizontal rules
 
-## Learn More
+### Preview (Right Panel)
+See a live preview of your document with the current template settings applied.
 
-To learn more about Next.js, take a look at the following resources:
+### Settings
+Click "Settings" to customize:
+- **Company Info**: Name, tagline, email, website, logo
+- **Colors**: Primary, secondary, text, and muted colors
+- **Header/Footer**: Quote numbering, dates, validity period
+- **Typography**: Font family, size, page padding
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Export
+Click "Export PDF" to generate your document:
+- Choose page size (A4, Letter, Legal)
+- Select orientation (Portrait, Landscape)
+- Set quality level (Draft, Standard, High)
+- Customize filename
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+quote-builder/
+├── app/
+│   ├── layout.tsx        # Root layout
+│   ├── page.tsx          # Main page component
+│   └── globals.css       # Global styles
+├── components/
+│   ├── Editor.tsx        # Markdown editor
+│   ├── Preview.tsx       # Document preview
+│   ├── Toolbar.tsx       # Top toolbar
+│   ├── TemplateSettings.tsx  # Settings panel
+│   └── ExportSettings.tsx    # Export modal
+├── lib/
+│   ├── markdown.ts       # Markdown parser
+│   ├── pdf.ts            # PDF generation
+│   ├── storage.ts        # localStorage helpers
+│   └── templates.ts      # Default templates
+├── types/
+│   └── index.ts          # TypeScript types
+└── public/
+    └── logo.webp         # Company logo
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS
+- **PDF Generation**: html2pdf.js (client-side)
+- **Persistence**: localStorage
+- **Language**: TypeScript
+
+## Deployment
+
+Ready for deployment on Vercel:
+
+```bash
+npm run build
+```
+
+Or deploy directly with the Vercel CLI:
+
+```bash
+npx vercel
+```
+
+## License
+
+Private - BrokenRubik
