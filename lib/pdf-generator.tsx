@@ -1,6 +1,7 @@
 'use client';
 
 import { TemplateConfig, ExportConfig, CoverPageData } from '@/types';
+import { CaseStudy } from '@/lib/case-studies';
 
 interface ParsedSection {
   type: 'h1' | 'h2' | 'h3' | 'p' | 'ul' | 'ol' | 'table' | 'blockquote' | 'hr';
@@ -130,7 +131,8 @@ export async function generatePDFDocument(
   template: TemplateConfig,
   exportConfig: ExportConfig,
   quoteNumber: string,
-  coverData?: CoverPageData | null
+  coverData?: CoverPageData | null,
+  caseStudies?: CaseStudy[]
 ): Promise<void> {
   // Dynamic import the PDF component that has proper JSX compilation
   const { createPDFBlob } = await import('./pdf-components');
@@ -146,6 +148,7 @@ export async function generatePDFDocument(
     quoteNumber,
     coverData,
     logoBase64,
+    caseStudies: caseStudies || [],
   });
 
   // Download the PDF

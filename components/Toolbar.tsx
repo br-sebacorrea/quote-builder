@@ -5,10 +5,24 @@ import Image from 'next/image';
 interface ToolbarProps {
   onOpenSettings: () => void;
   onOpenExport: () => void;
+  onOpenSave: () => void;
+  onOpenSavedQuotes: () => void;
+  onOpenCaseStudies: () => void;
   quoteNumber: string;
+  savedQuotesCount: number;
+  selectedCaseStudiesCount: number;
 }
 
-export default function Toolbar({ onOpenSettings, onOpenExport, quoteNumber }: ToolbarProps) {
+export default function Toolbar({
+  onOpenSettings,
+  onOpenExport,
+  onOpenSave,
+  onOpenSavedQuotes,
+  onOpenCaseStudies,
+  quoteNumber,
+  savedQuotesCount,
+  selectedCaseStudiesCount,
+}: ToolbarProps) {
   return (
     <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
       <div className="flex items-center gap-3">
@@ -26,9 +40,90 @@ export default function Toolbar({ onOpenSettings, onOpenExport, quoteNumber }: T
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Save Quote Button */}
+        <button
+          onClick={onOpenSave}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          title="Guardar quote"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+            />
+          </svg>
+          <span className="hidden sm:inline">Guardar</span>
+        </button>
+
+        {/* Saved Quotes Button */}
+        <button
+          onClick={onOpenSavedQuotes}
+          className="relative flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          title="Mis quotes guardados"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+            />
+          </svg>
+          <span className="hidden sm:inline">Mis Quotes</span>
+          {savedQuotesCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 text-xs font-medium text-white bg-gray-900 rounded-full flex items-center justify-center">
+              {savedQuotesCount > 9 ? '9+' : savedQuotesCount}
+            </span>
+          )}
+        </button>
+
+        {/* Case Studies Button */}
+        <button
+          onClick={onOpenCaseStudies}
+          className="relative flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          title="Case Studies"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            />
+          </svg>
+          <span className="hidden sm:inline">Cases</span>
+          {selectedCaseStudiesCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 text-xs font-medium text-white bg-purple-600 rounded-full flex items-center justify-center">
+              {selectedCaseStudiesCount}
+            </span>
+          )}
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+
+        {/* Settings Button */}
         <button
           onClick={onOpenSettings}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          title="Configuración"
         >
           <svg
             className="w-4 h-4"

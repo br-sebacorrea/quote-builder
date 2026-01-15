@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Document, Page, Text, View, Image, StyleSheet, Font, pdf } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, Link, StyleSheet, Font, pdf } from '@react-pdf/renderer';
 import { TemplateConfig, ExportConfig, CoverPageData } from '@/types';
+import { CaseStudy } from '@/lib/case-studies';
 
 // Track if fonts have been registered
 let fontsRegistered = false;
@@ -56,6 +57,7 @@ interface PDFDocumentProps {
   quoteNumber: string;
   coverData?: CoverPageData | null;
   logoBase64?: string;
+  caseStudies: CaseStudy[];
 }
 
 const PAGE_SIZES: Record<string, 'A4' | 'LETTER' | 'LEGAL'> = {
@@ -69,7 +71,7 @@ export async function createPDFBlob(props: PDFDocumentProps): Promise<Blob> {
   // Register fonts before creating PDF
   registerFonts();
 
-  const { sections, template, exportConfig, quoteNumber, coverData, logoBase64 } = props;
+  const { sections, template, exportConfig, quoteNumber, coverData, logoBase64, caseStudies } = props;
   const pageSize = PAGE_SIZES[exportConfig.pageSize] || 'A4';
 
   const today = new Date();
@@ -94,27 +96,47 @@ export async function createPDFBlob(props: PDFDocumentProps): Promise<Blob> {
     coverPage: {
       fontFamily: 'Inter',
       padding: 50,
-      backgroundColor: '#ffffff',
+      backgroundColor: '#0A0A0A',
+      position: 'relative',
+    },
+    coverHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 64,
     },
     coverLogo: {
       width: 48,
       height: 48,
-      marginBottom: 16,
     },
-    coverEstimateLabel: {
+    coverEstimateBadge: {
       fontFamily: 'Inter',
       fontSize: 10,
       fontWeight: 600,
       letterSpacing: 1,
-      marginBottom: 32,
+      color: '#9547FF',
+      backgroundColor: '#1a1a2e',
+      borderRadius: 20,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
     },
     coverTitle: {
       fontFamily: 'Poppins',
-      fontSize: 38,
+      fontSize: 42,
       fontWeight: 700,
       lineHeight: 1.1,
-      marginBottom: 4,
-      letterSpacing: -0.5,
+      marginBottom: 8,
+      letterSpacing: -1,
+      color: '#FFFFFF',
+    },
+    coverTitleAccent: {
+      fontFamily: 'Poppins',
+      fontSize: 42,
+      fontWeight: 700,
+      lineHeight: 1.1,
+      marginBottom: 8,
+      letterSpacing: -1,
+      color: '#DFF95F',
     },
     coverSubtitle: {
       fontFamily: 'Inter',
@@ -122,45 +144,76 @@ export async function createPDFBlob(props: PDFDocumentProps): Promise<Blob> {
       fontWeight: 400,
       lineHeight: 1.6,
       marginTop: 16,
-      maxWidth: 400,
+      maxWidth: 320,
+      color: '#94A3B8',
     },
     coverBottom: {
       position: 'absolute',
       bottom: 50,
       left: 50,
       right: 50,
-      borderTopWidth: 1,
-      borderTopColor: '#e5e7eb',
-      paddingTop: 24,
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      gap: 16,
     },
-    coverSection: {
-      width: '45%',
+    coverCard: {
+      flex: 1,
+      backgroundColor: '#141414',
+      borderRadius: 16,
+      padding: 20,
     },
     coverSectionLabel: {
       fontFamily: 'Inter',
       fontSize: 9,
       fontWeight: 600,
-      letterSpacing: 1,
-      marginBottom: 12,
+      letterSpacing: 1.5,
+      marginBottom: 16,
+      color: '#64748B',
+    },
+    coverCardRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 12,
+    },
+    coverIconBox: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    coverIconBoxClient: {
+      backgroundColor: '#2a1a1c',
+    },
+    coverIconBoxCompany: {
+      backgroundColor: '#9547FF',
     },
     coverCompanyName: {
       fontFamily: 'Inter',
       fontSize: 12,
       fontWeight: 600,
+      color: '#FFFFFF',
     },
     coverCompanyTagline: {
       fontFamily: 'Inter',
       fontSize: 10,
       fontWeight: 400,
       marginTop: 2,
+      color: '#64748B',
+    },
+    coverDateRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 16,
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: '#1e1e2e',
+      gap: 8,
     },
     coverDate: {
       fontFamily: 'Inter',
       fontSize: 10,
       fontWeight: 400,
-      marginTop: 10,
+      color: '#94A3B8',
     },
     h1: {
       fontFamily: 'Poppins',
@@ -273,63 +326,193 @@ export async function createPDFBlob(props: PDFDocumentProps): Promise<Blob> {
       justifyContent: 'space-between',
       fontSize: 9,
     },
+    // Case Studies Page Styles
+    caseStudiesPage: {
+      fontFamily: 'Inter',
+      padding: 50,
+      backgroundColor: '#0A0A0A',
+      position: 'relative',
+    },
+    caseStudiesHeader: {
+      marginBottom: 40,
+    },
+    caseStudiesBadge: {
+      fontFamily: 'Inter',
+      fontSize: 9,
+      fontWeight: 600,
+      letterSpacing: 1,
+      color: '#9547FF',
+      backgroundColor: '#1a1a2e',
+      borderRadius: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      marginBottom: 12,
+      alignSelf: 'flex-start',
+    },
+    caseStudiesTitle: {
+      fontFamily: 'Poppins',
+      fontSize: 28,
+      fontWeight: 700,
+      color: '#FFFFFF',
+      letterSpacing: -0.5,
+      marginBottom: 8,
+    },
+    caseStudiesSubtitle: {
+      fontFamily: 'Inter',
+      fontSize: 11,
+      color: '#64748B',
+      maxWidth: 320,
+    },
+    caseStudyRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: '#1e1e2e',
+      gap: 12,
+    },
+    caseStudyRowLast: {
+      borderBottomWidth: 0,
+    },
+    caseStudyNumber: {
+      width: 28,
+      height: 28,
+      backgroundColor: '#1a1a2e',
+      borderRadius: 6,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    caseStudyNumberText: {
+      fontFamily: 'Inter',
+      fontSize: 10,
+      fontWeight: 600,
+      color: '#9547FF',
+    },
+    caseStudyContent: {
+      flex: 1,
+    },
+    caseStudyTitle: {
+      fontFamily: 'Inter',
+      fontSize: 11,
+      fontWeight: 600,
+      color: '#FFFFFF',
+      marginBottom: 3,
+    },
+    caseStudySummary: {
+      fontFamily: 'Inter',
+      fontSize: 9,
+      color: '#64748B',
+      lineHeight: 1.4,
+    },
+    caseStudiesCta: {
+      borderTopWidth: 1,
+      borderTopColor: '#1e1e2e',
+      paddingTop: 16,
+      marginTop: 24,
+      alignItems: 'center',
+    },
+    caseStudiesCtaText: {
+      fontFamily: 'Inter',
+      fontSize: 11,
+      color: '#64748B',
+    },
+    caseStudiesCtaLink: {
+      fontFamily: 'Inter',
+      fontSize: 11,
+      fontWeight: 600,
+      color: '#DFF95F',
+    },
+    caseStudiesFooter: {
+      position: 'absolute',
+      bottom: 30,
+      left: 50,
+      right: 50,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    caseStudiesFooterLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    caseStudiesFooterLogo: {
+      width: 16,
+      height: 16,
+    },
+    caseStudiesFooterText: {
+      fontFamily: 'Inter',
+      fontSize: 9,
+      color: '#64748B',
+    },
   });
 
   const doc = (
     <Document>
       {hasCover && (
         <Page size={pageSize} style={styles.coverPage}>
-          {logoBase64 && <Image src={logoBase64} style={styles.coverLogo} />}
+          {/* Header with Logo and Estimate Badge */}
+          <View style={styles.coverHeader}>
+            {logoBase64 && <Image src={logoBase64} style={styles.coverLogo} />}
+            <Text style={styles.coverEstimateBadge}>ESTIMATE #{quoteNumber}</Text>
+          </View>
 
-          <Text style={styles.coverEstimateLabel}>
-            <Text style={{ color: template.mutedColor }}>ESTIMATE </Text>
-            <Text style={{ color: template.primaryColor }}>#{quoteNumber}</Text>
-          </Text>
+          {/* Main Title */}
+          <View style={{ marginBottom: 32 }}>
+            <Text style={styles.coverTitle}>{coverData?.title}</Text>
+            {coverData?.titleAccent && (
+              <Text style={styles.coverTitleAccent}>{coverData.titleAccent}</Text>
+            )}
+          </View>
 
-          <Text style={[styles.coverTitle, { color: template.primaryColor }]}>
-            {coverData?.title}
-          </Text>
-          {coverData?.titleAccent && (
-            <Text style={[styles.coverTitle, { color: template.accentColor }]}>
-              {coverData.titleAccent}
-            </Text>
-          )}
-
+          {/* Subtitle */}
           {coverData?.subtitle && (
-            <Text style={[styles.coverSubtitle, { color: template.textColor }]}>
-              {coverData.subtitle}
-            </Text>
+            <Text style={styles.coverSubtitle}>{coverData.subtitle}</Text>
           )}
 
+          {/* Bottom Cards */}
           <View style={styles.coverBottom}>
-            <View style={styles.coverSection}>
-              <Text style={[styles.coverSectionLabel, { color: template.mutedColor }]}>
-                PREPARED FOR
-              </Text>
-              <Text style={[styles.coverCompanyName, { color: template.primaryColor }]}>
-                {coverData?.clientName || 'Client Name'}
-              </Text>
-              <Text style={[styles.coverCompanyTagline, { color: template.mutedColor }]}>
-                {coverData?.clientAddress || 'Address'}
-              </Text>
-              <Text style={[styles.coverCompanyTagline, { color: template.mutedColor }]}>
-                {coverData?.clientCity || 'City, State ZIP'}
-              </Text>
+            {/* Prepared For Card */}
+            <View style={styles.coverCard}>
+              <Text style={styles.coverSectionLabel}>PREPARED FOR</Text>
+              <View style={styles.coverCardRow}>
+                <View style={[styles.coverIconBox, styles.coverIconBoxClient]}>
+                  <Text style={{ fontSize: 16, color: '#FF707A' }}>🏢</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.coverCompanyName}>
+                    {coverData?.clientName || 'Client Name'}
+                  </Text>
+                  <Text style={styles.coverCompanyTagline}>
+                    {coverData?.clientAddress || 'Address'}
+                  </Text>
+                  <Text style={styles.coverCompanyTagline}>
+                    {coverData?.clientCity || 'City, State ZIP'}
+                  </Text>
+                </View>
+              </View>
             </View>
 
-            <View style={styles.coverSection}>
-              <Text style={[styles.coverSectionLabel, { color: template.mutedColor }]}>
-                PREPARED BY
-              </Text>
-              <Text style={[styles.coverCompanyName, { color: template.primaryColor }]}>
-                {template.companyName}
-              </Text>
-              <Text style={[styles.coverCompanyTagline, { color: template.mutedColor }]}>
-                {template.companyTagline}
-              </Text>
-              <Text style={[styles.coverDate, { color: template.mutedColor }]}>
-                Issued: {formattedDate}
-              </Text>
+            {/* Prepared By Card */}
+            <View style={styles.coverCard}>
+              <Text style={styles.coverSectionLabel}>PREPARED BY</Text>
+              <View style={styles.coverCardRow}>
+                <View style={[styles.coverIconBox, styles.coverIconBoxCompany]}>
+                  {logoBase64 ? (
+                    <Image src={logoBase64} style={{ width: 24, height: 24 }} />
+                  ) : (
+                    <View style={{ width: 20, height: 20, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 4 }} />
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.coverCompanyName}>{template.companyName}</Text>
+                  <Text style={styles.coverCompanyTagline}>{template.companyTagline}</Text>
+                </View>
+              </View>
+              <View style={styles.coverDateRow}>
+                <Text style={{ fontSize: 12, color: '#9547FF' }}>📅</Text>
+                <Text style={styles.coverDate}>{formattedDate}</Text>
+              </View>
             </View>
           </View>
         </Page>
@@ -437,6 +620,61 @@ export async function createPDFBlob(props: PDFDocumentProps): Promise<Blob> {
           </View>
         )}
       </Page>
+
+      {/* Case Studies Page */}
+      {caseStudies.length > 0 && (
+        <Page size={pageSize} style={styles.caseStudiesPage}>
+          {/* Header */}
+          <View style={styles.caseStudiesHeader}>
+            <Text style={styles.caseStudiesBadge}>PORTFOLIO</Text>
+            <Text style={styles.caseStudiesTitle}>Our Work Speaks</Text>
+            <Text style={styles.caseStudiesSubtitle}>
+              Explore how we've helped businesses transform their operations.
+            </Text>
+          </View>
+
+          {/* Case Studies List */}
+          <View>
+            {caseStudies.map((study, index) => (
+              <Link
+                key={study.id}
+                src={study.link}
+                style={[
+                  styles.caseStudyRow,
+                  index === caseStudies.length - 1 ? styles.caseStudyRowLast : {},
+                ]}
+              >
+                <View style={styles.caseStudyNumber}>
+                  <Text style={styles.caseStudyNumberText}>
+                    {String(index + 1).padStart(2, '0')}
+                  </Text>
+                </View>
+                <View style={styles.caseStudyContent}>
+                  <Text style={styles.caseStudyTitle}>{study.title}</Text>
+                  <Text style={styles.caseStudySummary}>{study.summary}</Text>
+                </View>
+              </Link>
+            ))}
+          </View>
+
+          {/* CTA */}
+          <Link src="https://brokenrubik.com/case-studies" style={styles.caseStudiesCta}>
+            <Text style={styles.caseStudiesCtaText}>
+              View all case studies at{' '}
+              <Text style={styles.caseStudiesCtaLink}>brokenrubik.com/case-studies</Text>
+            </Text>
+          </Link>
+
+          {/* Footer */}
+          <View style={styles.caseStudiesFooter}>
+            <View style={styles.caseStudiesFooterLeft}>
+              {logoBase64 && <Image src={logoBase64} style={styles.caseStudiesFooterLogo} />}
+              <Text style={styles.caseStudiesFooterText}>{template.companyName}</Text>
+            </View>
+            <Text style={styles.caseStudiesFooterText}>{template.website}</Text>
+          </View>
+        </Page>
+      )}
     </Document>
   );
 

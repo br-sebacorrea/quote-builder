@@ -55,20 +55,21 @@ export function saveTemplate(template: TemplateConfig): void {
   saveStorageData({ template });
 }
 
-export function saveQuote(title: string, content: string): Quote {
+export function saveQuote(title: string, content: string, tags: string[] = []): Quote {
   const data = getStorageData();
   const newQuoteNumber = data.lastQuoteNumber + 1;
 
   const quote: Quote = {
     id: `${data.template.quotePrefix}-${String(newQuoteNumber).padStart(4, '0')}`,
     title,
+    tags: tags.map(t => t.trim().toLowerCase()).filter(t => t.length > 0),
     content,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
-  // Keep only the last 10 quotes
-  const quotes = [quote, ...data.quotes].slice(0, 10);
+  // Keep only the last 50 quotes
+  const quotes = [quote, ...data.quotes].slice(0, 50);
 
   saveStorageData({
     quotes,
@@ -90,6 +91,37 @@ export function deleteQuote(id: string): void {
   const data = getStorageData();
   const quotes = data.quotes.filter((q) => q.id !== id);
   saveStorageData({ quotes });
+}
+
+export function updateQuote(
+  id: string,
+  updates: { title?: string; tags?: string[]; content?: string }
+): Quote | null {
+  const data = getStorageData();
+  const quoteIndex = data.quotes.findIndex((q) => q.id === id);
+
+  if (quoteIndex === -1) return null;
+
+  const updatedQuote: Quote = {
+    ...data.quotes[quoteIndex],
+    ...updates,
+    tags: updates.tags
+      ? updates.tags.map(t => t.trim().toLowerCase()).filter(t => t.length > 0)
+      : data.quotes[quoteIndex].tags || [],
+    updatedAt: new Date().toISOString(),
+  };
+
+  const quotes = [...data.quotes];
+  quotes[quoteIndex] = updatedQuote;
+  saveStorageData({ quotes });
+
+  return updatedQuote;
+}
+
+export function getAllTags(): string[] {
+  const data = getStorageData();
+  const allTags = data.quotes.flatMap((q) => q.tags || []);
+  return [...new Set(allTags)].sort();
 }
 
 export function generateQuoteNumber(prefix: string): string {

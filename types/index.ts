@@ -53,6 +53,7 @@ export interface ExportConfig {
 export interface Quote {
   id: string;
   title: string;
+  tags: string[];
   content: string;
   createdAt: string;
   updatedAt: string;

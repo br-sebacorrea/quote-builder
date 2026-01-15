@@ -1,16 +1,30 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { TemplateConfig, ExportConfig } from '@/types';
+import { TemplateConfig, ExportConfig, Quote } from '@/types';
 import { defaultTemplate, defaultMarkdown } from '@/lib/templates';
-import { getStorageData, saveDraft, saveTemplate, generateQuoteNumber } from '@/lib/storage';
+import {
+  getStorageData,
+  saveDraft,
+  saveTemplate,
+  generateQuoteNumber,
+  saveQuote,
+  getQuotes,
+  deleteQuote,
+  updateQuote,
+  getAllTags,
+} from '@/lib/storage';
 import { generatePDFDocument } from '@/lib/pdf-generator';
 import { parseMarkdownWithCover } from '@/lib/markdown';
+import { defaultCaseStudyIds, getCaseStudiesByIds } from '@/lib/case-studies';
 import Editor from '@/components/Editor';
 import Preview from '@/components/Preview';
 import Toolbar from '@/components/Toolbar';
 import TemplateSettings from '@/components/TemplateSettings';
 import ExportSettings from '@/components/ExportSettings';
+import SaveQuoteModal from '@/components/SaveQuoteModal';
+import SavedQuotesPanel from '@/components/SavedQuotesPanel';
+import CaseStudiesSelector from '@/components/CaseStudiesSelector';
 
 export default function Home() {
   const [content, setContent] = useState(defaultMarkdown);
@@ -18,9 +32,15 @@ export default function Home() {
   const [quoteNumber, setQuoteNumber] = useState('BR-0001');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isSaveOpen, setIsSaveOpen] = useState(false);
+  const [isSavedQuotesOpen, setIsSavedQuotesOpen] = useState(false);
+  const [isCaseStudiesOpen, setIsCaseStudiesOpen] = useState(false);
+  const [selectedCaseStudyIds, setSelectedCaseStudyIds] = useState<string[]>(defaultCaseStudyIds);
   const [isExporting, setIsExporting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [savedQuotes, setSavedQuotes] = useState<Quote[]>([]);
+  const [allTags, setAllTags] = useState<string[]>([]);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -30,7 +50,15 @@ export default function Home() {
     setContent(data.currentDraft);
     setTemplate(data.template);
     setQuoteNumber(generateQuoteNumber(data.template.quotePrefix));
+    setSavedQuotes(getQuotes());
+    setAllTags(getAllTags());
     setIsLoaded(true);
+  }, []);
+
+  // Helper to refresh quotes list
+  const refreshQuotes = useCallback(() => {
+    setSavedQuotes(getQuotes());
+    setAllTags(getAllTags());
   }, []);
 
   // Auto-save with debounce
@@ -76,7 +104,8 @@ export default function Home() {
       setIsExporting(true);
       try {
         const { coverData, html: htmlContent } = parseMarkdownWithCover(content);
-        await generatePDFDocument(htmlContent, template, exportConfig, quoteNumber, coverData);
+        const selectedCaseStudies = getCaseStudiesByIds(selectedCaseStudyIds);
+        await generatePDFDocument(htmlContent, template, exportConfig, quoteNumber, coverData, selectedCaseStudies);
         showToast('PDF exported successfully', 'success');
         setIsExportOpen(false);
       } catch (error) {
@@ -86,7 +115,47 @@ export default function Home() {
         setIsExporting(false);
       }
     },
-    [content, template, quoteNumber, showToast]
+    [content, template, quoteNumber, selectedCaseStudyIds, showToast]
+  );
+
+  const handleSaveQuote = useCallback(
+    (title: string, tags: string[]) => {
+      saveQuote(title, content, tags);
+      refreshQuotes();
+      setIsSaveOpen(false);
+      showToast('Quote guardado exitosamente', 'success');
+    },
+    [content, refreshQuotes, showToast]
+  );
+
+  const handleLoadQuote = useCallback(
+    (quote: Quote) => {
+      // Save current draft first
+      saveDraft(content);
+      // Load the quote content
+      setContent(quote.content);
+      setIsSavedQuotesOpen(false);
+      showToast(`Quote "${quote.title}" cargado`, 'success');
+    },
+    [content, showToast]
+  );
+
+  const handleDeleteQuote = useCallback(
+    (id: string) => {
+      deleteQuote(id);
+      refreshQuotes();
+      showToast('Quote eliminado', 'success');
+    },
+    [refreshQuotes, showToast]
+  );
+
+  const handleUpdateQuote = useCallback(
+    (id: string, updates: { title?: string; tags?: string[] }) => {
+      updateQuote(id, updates);
+      refreshQuotes();
+      showToast('Quote actualizado', 'success');
+    },
+    [refreshQuotes, showToast]
   );
 
   // Show loading state
@@ -122,7 +191,12 @@ export default function Home() {
       <Toolbar
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenExport={() => setIsExportOpen(true)}
+        onOpenSave={() => setIsSaveOpen(true)}
+        onOpenSavedQuotes={() => setIsSavedQuotesOpen(true)}
+        onOpenCaseStudies={() => setIsCaseStudiesOpen(true)}
         quoteNumber={quoteNumber}
+        savedQuotesCount={savedQuotes.length}
+        selectedCaseStudiesCount={selectedCaseStudyIds.length}
       />
 
       {/* Main Content */}
@@ -134,7 +208,12 @@ export default function Home() {
 
         {/* Preview Panel */}
         <div className="w-1/2 overflow-hidden light-scrollbar">
-          <Preview content={content} template={template} quoteNumber={quoteNumber} />
+          <Preview
+            content={content}
+            template={template}
+            quoteNumber={quoteNumber}
+            selectedCaseStudies={getCaseStudiesByIds(selectedCaseStudyIds)}
+          />
         </div>
       </div>
 
@@ -152,6 +231,31 @@ export default function Home() {
         onExport={handleExport}
         quoteNumber={quoteNumber}
         isExporting={isExporting}
+      />
+
+      <SaveQuoteModal
+        isOpen={isSaveOpen}
+        onClose={() => setIsSaveOpen(false)}
+        onSave={handleSaveQuote}
+        existingTags={allTags}
+        defaultTitle={quoteNumber}
+      />
+
+      <SavedQuotesPanel
+        isOpen={isSavedQuotesOpen}
+        onClose={() => setIsSavedQuotesOpen(false)}
+        quotes={savedQuotes}
+        allTags={allTags}
+        onLoad={handleLoadQuote}
+        onDelete={handleDeleteQuote}
+        onUpdate={handleUpdateQuote}
+      />
+
+      <CaseStudiesSelector
+        isOpen={isCaseStudiesOpen}
+        onClose={() => setIsCaseStudiesOpen(false)}
+        selectedIds={selectedCaseStudyIds}
+        onSave={setSelectedCaseStudyIds}
       />
 
       {/* Toast Notifications */}
